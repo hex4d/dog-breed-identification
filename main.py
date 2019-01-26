@@ -13,7 +13,6 @@ train_dir = os.path.join(base_dir, 'train')
 validation_dir = os.path.join(base_dir, 'validation')
 test_dir = os.path.join(base_dir, 'test')
 
-validation_rate = 0.2
 
 class_csv_file = os.path.join(base_dir, 'labels.csv')
 
@@ -35,7 +34,7 @@ def create_dataset_directory():
             os.mkdir(dist_path)
         shutil.move(os.path.join(train_dir, train_data), dist_path)
 
-input_size = 150
+input_size = 256
 output_size = 120
 def simple_cnn_model():
     model = models.Sequential()
@@ -51,6 +50,38 @@ def simple_cnn_model():
     model.add(layers.Convolution2D(256, (3, 3)))
     model.add(layers.Activation('relu'))
     model.add(layers.MaxPool2D((2, 2)))
+    model.add(layers.Convolution2D(512, (3, 3)))
+    model.add(layers.Activation('relu'))
+    model.add(layers.MaxPool2D((2, 2)))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024))
+    model.add(layers.Activation('relu'))
+    model.add(layers.Dense(512))
+    model.add(layers.Activation('relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(output_size))
+    model.add(layers.Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+    # model.compile(loss='binary_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+    return model
+
+input_size = 128
+output_size = 120
+def simple_cnn_model2():
+    model = models.Sequential()
+    model.add(layers.Convolution2D(16, (3, 3), input_shape=(input_size, input_size, 3)))
+    model.add(layers.Activation('relu'))
+    model.add(layers.MaxPool2D((2, 2)))
+    model.add(layers.Convolution2D(32, (3, 3)))
+    model.add(layers.Activation('relu'))
+    model.add(layers.MaxPool2D((2, 2)))
+    model.add(layers.Convolution2D(48, (3, 3)))
+    model.add(layers.Activation('relu'))
+    model.add(layers.MaxPool2D((2, 2)))
+    model.add(layers.Convolution2D(64, (3, 3)))
+    model.add(layers.Activation('relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.MaxPool2D((2, 2)))
     model.add(layers.Flatten())
     model.add(layers.Dense(512))
     model.add(layers.Activation('relu'))
@@ -61,14 +92,19 @@ def simple_cnn_model():
     # model.compile(loss='binary_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
     return model
 
-batch_size = 20
-validation_split = 0.2
+batch_size = 32
+validation_split = 0.1
 def load_data():
+    
     datagen = ImageDataGenerator(
         rescale=1./255,
         validation_split=validation_split,
-        horizontal_flip=True
+        horizontal_flip=True,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        rotation_range=20,
     )
+
     train_generator = datagen.flow_from_directory(
         train_dir,
         target_size=(input_size, input_size),
@@ -88,7 +124,7 @@ def load_data():
     return train_generator, val_generator
 
 
-model = simple_cnn_model()
+model = simple_cnn_model2()
 
 epochs = 30
 train_generator, val_generator = load_data()
