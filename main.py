@@ -98,7 +98,7 @@ def vgg_cnn_model():
                       include_top=False,
                       input_shape=(150, 150, 3))
     conv_base.trainable = False
-    model. = models.Sequential()
+    model = models.Sequential()
     model.add(conv_base)
     model.add(layers.Flatten())
     model.add(layers.Dense(256))
@@ -110,8 +110,8 @@ def vgg_cnn_model():
 
 batch_size = 32
 validation_split = 0.1
+
 def load_data():
-    
     datagen = ImageDataGenerator(
         rescale=1./255,
         validation_split=validation_split,
@@ -120,7 +120,6 @@ def load_data():
         height_shift_range=0.2,
         rotation_range=20,
     )
-
     train_generator = datagen.flow_from_directory(
         train_dir,
         target_size=(input_size, input_size),
@@ -140,12 +139,23 @@ def load_data():
     return train_generator, val_generator
 
 
-# model = simple_cnn_model2()
-model = vgg_cnn_model()
+model = simple_cnn_model2()
+# model = vgg_cnn_model()
 
-epochs = 30
+epochs = 1
 train_generator, val_generator = load_data()
 
-model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
+classes= train_generator.class_indices
+df = pd.DataFrame(classes)
+df = pd.io.json.json_normalize(classes)
+df.to_csv('train_classes.cls')
 
+# model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
+model.fit_generator(train_generator, steps_per_epoch=20, epochs=epochs, validation_data=val_generator, validation_steps=50)
+
+model_path = 'models/'
+if not os.path.exists(model_path):
+    os.mkdir(model_path)
+model_path = os.path.join(model_path, 'model.h5')
+model.save(model_path)
 
