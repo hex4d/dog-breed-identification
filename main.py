@@ -111,8 +111,8 @@ def vgg_cnn_model():
 
 batch_size = 32
 validation_split = 0.1
+
 def load_data():
-    
     datagen = ImageDataGenerator(
         rescale=1./255,
         validation_split=validation_split,
@@ -122,7 +122,6 @@ def load_data():
         rotation_range=20,
         shear_range=5,
     )
-
     train_generator = datagen.flow_from_directory(
         train_dir,
         target_size=(input_size, input_size),
@@ -142,12 +141,21 @@ def load_data():
     return train_generator, val_generator
 
 
-# model = simple_cnn_model2()
-model = vgg_cnn_model()
+model = simple_cnn_model2()
+# model = vgg_cnn_model()
+
+train_generator, val_generator = load_data()
+classes= train_generator.class_indices
+df = pd.DataFrame.from_dict(classes, orient='index')
+df.to_csv('train_classes.cls')
 
 epochs = 120
-train_generator, val_generator = load_data()
 
 history = model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
 
+model_path = 'models/'
+if not os.path.exists(model_path):
+    os.mkdir(model_path)
+model_path = os.path.join(model_path, 'model.h5')
+model.save(model_path)
 
