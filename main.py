@@ -36,7 +36,7 @@ def create_dataset_directory():
             os.mkdir(dist_path)
         shutil.move(os.path.join(train_dir, train_data), dist_path)
 
-input_size = 256
+input_size = 150
 output_size = 120
 def simple_cnn_model():
     model = models.Sequential()
@@ -67,8 +67,6 @@ def simple_cnn_model():
     # model.compile(loss='binary_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
     return model
 
-input_size = 128
-output_size = 120
 def simple_cnn_model2():
     model = models.Sequential()
     model.add(layers.Convolution2D(16, (3, 3), input_shape=(input_size, input_size, 3)))
@@ -97,15 +95,18 @@ def vgg_cnn_model():
     conv_base = VGG16(weights='imagenet',
                       include_top=False,
                       input_shape=(150, 150, 3))
-    conv_base.trainable = False
-    model. = models.Sequential()
+    conv_base.trainable = True
+    for layer in conv_base.layers[:15]:
+        layer.trainable = False
+    model = models.Sequential()
     model.add(conv_base)
     model.add(layers.Flatten())
-    model.add(layers.Dense(256))
+    model.add(layers.Dense(1024))
     model.add(layers.Activation('relu'))
-    model.add(layers.Dense(120))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(output_size))
     model.add(layers.Activation('softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+    model.compile(loss='categorical_crossentropy', optimizer=optimizers.SGD(lr=1e-4, momentum=0.9), metrics=['acc'])
     return model
 
 batch_size = 32
@@ -119,6 +120,7 @@ def load_data():
         width_shift_range=0.2,
         height_shift_range=0.2,
         rotation_range=20,
+        shear_range=5,
     )
 
     train_generator = datagen.flow_from_directory(
@@ -143,9 +145,9 @@ def load_data():
 # model = simple_cnn_model2()
 model = vgg_cnn_model()
 
-epochs = 30
+epochs = 120
 train_generator, val_generator = load_data()
 
-model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
+history = model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
 
 
