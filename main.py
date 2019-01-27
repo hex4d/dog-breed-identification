@@ -8,6 +8,8 @@ import os
 import pandas as pd
 import shutil
 
+from keras.applications import VGG16
+
 base_dir = './data/'
 train_dir = os.path.join(base_dir, 'train')
 validation_dir = os.path.join(base_dir, 'validation')
@@ -89,7 +91,21 @@ def simple_cnn_model2():
     model.add(layers.Dense(output_size))
     model.add(layers.Activation('softmax'))
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
-    # model.compile(loss='binary_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+    return model
+
+def vgg_cnn_model():
+    conv_base = VGG16(weights='imagenet',
+                      include_top=False,
+                      input_shape=(150, 150, 3))
+    conv_base.trainable = False
+    model. = models.Sequential()
+    model.add(conv_base)
+    model.add(layers.Flatten())
+    model.add(layers.Dense(256))
+    model.add(layers.Activation('relu'))
+    model.add(layers.Dense(120))
+    model.add(layers.Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
     return model
 
 batch_size = 32
@@ -124,7 +140,8 @@ def load_data():
     return train_generator, val_generator
 
 
-model = simple_cnn_model2()
+# model = simple_cnn_model2()
+model = vgg_cnn_model()
 
 epochs = 30
 train_generator, val_generator = load_data()
