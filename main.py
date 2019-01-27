@@ -146,8 +146,7 @@ epochs = 1
 train_generator, val_generator = load_data()
 
 classes= train_generator.class_indices
-df = pd.DataFrame(classes)
-df = pd.io.json.json_normalize(classes)
+df = pd.DataFrame.from_dict(classes, orient='index')
 df.to_csv('train_classes.cls')
 
 # model.fit_generator(train_generator, steps_per_epoch=len(train_generator), epochs=epochs, validation_data=val_generator, validation_steps=50)
