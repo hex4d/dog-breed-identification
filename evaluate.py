@@ -1,6 +1,7 @@
 from keras import models
 from keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
+import os
 
 
 test_dir = './data/test'
@@ -19,31 +20,36 @@ def load_test_data():
     )
     return generator
 
+def evaluate(model):
+    test_generator = load_test_data()
+    filenames = test_generator.filenames
+
+    # model.summary()
+    predictions = model.predict_generator(
+        test_generator,
+        steps=len(filenames)
+    )
+
+    df = pd.read_csv('train_classes.cls')
+    columns = ['id']
+    columns.extend(df.values[:,0])
+
+    test_data_frame = pd.DataFrame(columns=columns)
+
+    for i, prediction in enumerate(predictions):
+        row_array = [filenames[i].replace('0/','').replace('.jpg','')]
+        row_array.extend(prediction)
+        row_data = pd.DataFrame([row_array], columns=columns)
+        test_data_frame = test_data_frame.append(row_data)
+
+    test_data_frame.to_csv('test_output.csv', index=False)
 
 
-model = models.load_model('models/model.h5')
-test_generator = load_test_data()
-filenames = test_generator.filenames
+base_dir = 'models/'
+def load_model(model_name):
+    return models.load_model(os.path.join(base_dir + model_name, 'model.h5'))
 
-
-# model.summary()
-predictions = model.predict_generator(
-    test_generator,
-    steps=len(filenames)
-)
-
-df = pd.read_csv('train_classes.cls')
-columns = ['id']
-columns.extend(df.values[:,0])
-
-test_data_frame = pd.DataFrame(columns=columns)
-
-for i, prediction in enumerate(predictions):
-    row_array = [filenames[i]]
-    row_array.extend(prediction)
-    row_data = pd.DataFrame([row_array], columns=columns)
-    test_data_frame = test_data_frame.append(row_data)
-
-test_data_frame.to_csv('test_output.csv', index=False)
-
-
+# model_name = 'cnn_model2'
+model_name = 'single_resnet'
+model = load_model(model_name)
+evaluate(model)
